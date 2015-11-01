@@ -535,7 +535,9 @@ type internal LineTokenizer(text:string,
     let lexbuf = UnicodeLexing.StringAsLexbuf text
     
     let mutable singleLineTokenState = SingleLineTokenState.BeforeHash
-    let fsx = CompileOps.IsScript(filename)
+    let fsx = match filename with 
+              | null -> false
+              | _ -> CompileOps.IsScript(filename)
 
     // ----------------------------------------------------------------------------------
     // This implements post-processing of #directive tokens - not very elegant, but it works...
@@ -602,7 +604,9 @@ type internal LineTokenizer(text:string,
           
 
 
-    do resetLexbufPos filename lexbuf 
+    do match filename with 
+       | null -> lexbuf.EndPos <- Internal.Utilities.Text.Lexing.Position.Empty
+       | _ -> resetLexbufPos filename lexbuf 
     
     member x.ScanToken(lexintInitial) : Option<TokenInformation> * LexState = 
         use unwindBP = PushThreadBuildPhaseUntilUnwind (BuildPhase.Parse)

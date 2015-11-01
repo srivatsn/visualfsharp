@@ -15,6 +15,9 @@ open System
 open System.IO
 open System.Diagnostics
 open System.Collections.Generic
+open Microsoft.CodeAnalysis
+open Microsoft.VisualStudio.LanguageServices.Implementation
+open Microsoft.VisualStudio.LanguageServices.Implementation.ProjectSystem
 
 module internal ProjectSiteOptions =    
 
@@ -150,7 +153,7 @@ type internal Artifacts() =
                 | Some(site) -> 
 #if DEBUG
                     site.SourceFilesOnDisk() |> Seq.iter (fun src -> 
-                        Debug.Assert(System.IO.Path.GetFullPath(src) = src, "SourceFilesOnDisk reported a filename that was not in canonical format")
+                        Debug.Assert(Internal.Utilities.FileSystem.Path.SafeGetFullPath(src) = src, "SourceFilesOnDisk reported a filename that was not in canonical format")
                     )
 #endif
                     if site.SourceFilesOnDisk() |> Array.exists (fun src -> System.StringComparer.OrdinalIgnoreCase.Equals(src,filename)) then
@@ -169,3 +172,18 @@ type internal Artifacts() =
         match art.TryFindOwningProject(rdt, filename) with
         | Some site -> site
         | None -> SiteOfSingleFile()
+
+
+type FSharpProject(hierarchy: IVsHierarchy, serviceProvider: System.IServiceProvider, visualStudioWorkspace: VisualStudioWorkspaceImpl, projectName: string) =
+    inherit AbstractProject(visualStudioWorkspace.ProjectTracker,
+                            null,
+                            projectName,
+                            hierarchy,
+                            "F#",
+                            serviceProvider,
+                            null,
+                            visualStudioWorkspace,
+                            null)
+
+    member this.AddReference(filePath : string) = 
+        this.AddMetadataReferenceAndTryConvertingToProjectReferenceIfPossible(filePath, new MetadataReferenceProperties(), VSConstants.S_FALSE)

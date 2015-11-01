@@ -41,3 +41,6 @@ type internal IProjectSite =
   [<ComImport; InterfaceType(ComInterfaceType.InterfaceIsIUnknown); Guid("ad98f020-bad0-0000-0000-abc037459871")>]
  type internal IProvideProjectSite =
     abstract GetProjectSite : unit -> IProjectSite
+
+ type internal IProjectHost =
+    abstract OpenProject : IProjectSite -> unit

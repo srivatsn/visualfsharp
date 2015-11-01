@@ -16,7 +16,8 @@ type internal Severity =
     | Error
 
 type internal ErrorInfo = 
-    { FileName:string
+    { Id:string
+      FileName:string
       StartLine:int
       EndLine:int
       StartColumn:int

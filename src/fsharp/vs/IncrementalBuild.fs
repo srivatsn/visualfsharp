@@ -985,6 +985,7 @@ type Severity =
     | Error
 
 type ErrorInfo = {
+    Id:string
     FileName:string
     StartLine:int
     EndLine:int
@@ -1020,7 +1021,8 @@ type ErrorInfo = {
         let (s1:int),(s2:int) = Pos.toVS m.Start
         let (s3:int),(s4:int) = Pos.toVS (if trim then m.Start else m.End)
         let msg = bufs (fun buf -> OutputPhasedError buf exn false)
-        {FileName=m.FileName; StartLine=s1; StartColumn=s2; EndLine=s3; EndColumn=s4; Severity=(if warn then Severity.Warning else Severity.Error); Subcategory=exn.Subcategory(); Message=msg}
+        let id = "FS" + GetErrorNumber(exn).ToString()
+        {Id=id; FileName=m.FileName; StartLine=s1; StartColumn=s2; EndLine=s3; EndColumn=s4; Severity=(if warn then Severity.Warning else Severity.Error); Subcategory=exn.Subcategory(); Message=msg}
         
     
 /// Use to reset error and warning handlers            

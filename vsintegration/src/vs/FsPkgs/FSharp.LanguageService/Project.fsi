@@ -4,6 +4,8 @@ namespace Microsoft.VisualStudio.FSharp.LanguageService
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open Microsoft.VisualStudio.TextManager.Interop
 open Microsoft.VisualStudio.Shell.Interop
+open Microsoft.VisualStudio.LanguageServices.Implementation.ProjectSystem
+open System
 
 module internal ProjectSiteOptions = 
     val Create : IProjectSite*string -> CheckOptions
@@ -24,4 +26,8 @@ type internal Artifacts =
     member GetSourceOfFilename : rdt:IVsRunningDocumentTable * filename:string -> IdealSource option // REVIEW: Should be TryGetSourceOfFilename
     member GetDefinesForFile : rdt:IVsRunningDocumentTable * filename:string * enableStandaloneFileIntellisense:bool-> string list
     
-    
+[<Class>]
+type FSharpProject = 
+    inherit AbstractProject
+    new : hierarychy:IVsHierarchy * serviceProvider:IServiceProvider * visualStudioWorkspaceImpl:VisualStudioWorkspaceImpl * projectName:string -> FSharpProject
+    member AddReference : filePath:string -> int
