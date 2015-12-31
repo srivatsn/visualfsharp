@@ -19,7 +19,6 @@ open Microsoft.VisualStudio.Text.Tagging
 
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-
 //    Notes:
 //      - SetLineText() is called one line at a time.
 //      - An instance of FSharpScanner is associated with exactly one buffer (IVsTextLines).

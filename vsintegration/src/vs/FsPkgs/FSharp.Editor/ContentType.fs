@@ -20,5 +20,3 @@ type FSharpContentTypeLanguageService [<System.Composition.ImportingConstructor>
     interface IContentTypeLanguageService with
         member this.GetDefaultContentType() = 
             this.contentTypeRegistryService.GetContentType("F#");
-
-
