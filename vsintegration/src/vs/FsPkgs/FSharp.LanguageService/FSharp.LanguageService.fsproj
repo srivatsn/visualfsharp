@@ -25,9 +25,15 @@
     <EmbeddedResource Include="VSPackage.resx" />
     <EmbeddedResource Include="FSLangSvcStrings.resx" />
     <Compile Include="InternalsVisibleTo.fs" />
-    <Compile Include="$(FSharpSourcesRoot)\fsharp\InternalCollections.fsi" />
-    <Compile Include="$(FSharpSourcesRoot)\fsharp\InternalCollections.fs" />
-    <Compile Include="..\Common.fs" />
+    <Compile Include="$(FSharpSourcesRoot)\fsharp\InternalCollections.fsi">
+      <Link>InternalCollections.fsi</Link>
+    </Compile>
+    <Compile Include="$(FSharpSourcesRoot)\fsharp\InternalCollections.fs">
+      <Link>InternalCollections.fs</Link>
+    </Compile>
+    <Compile Include="..\Common.fs">
+      <Link>Common.fs</Link>
+    </Compile>
     <Compile Include="ProjectSite.fs" />
     <Compile Include="IdealManagedLanguageService.fs" />
     <Compile Include="Keyboard.fs" />
@@ -46,6 +52,7 @@
     <Compile Include="XmlDocumentation.fs" />
     <Compile Include="Servicem.fsi" />
     <Compile Include="Servicem.fs" />
+    <Compile Include="LanguageService.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
@@ -93,6 +100,24 @@
     <Reference Include="Microsoft.VisualStudio.ExtensibilityHosting, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.ComponentModelHost, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\..\..\..\packages\Roslyn\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.CodeAnalysis.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Features">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.CodeAnalysis.Features.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.LanguageServices">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.VisualStudio.LanguageServices.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.LanguageServices.Implementation">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.VisualStudio.LanguageServices.Implementation.dll</HintPath>
+    </Reference>
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>

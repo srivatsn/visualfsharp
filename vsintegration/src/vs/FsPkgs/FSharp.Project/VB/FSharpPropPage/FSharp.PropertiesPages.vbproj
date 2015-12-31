@@ -28,7 +28,7 @@
     <NoWarn>40026;42105;42107;42353</NoWarn>
     <!-- Copy everything to SuiteBin so that it can be unittested -->
     <CopyToSuiteBin>true</CopyToSuiteBin>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <DefineConstants>$(DefineConstants),FSHARP_CORE_4_5=True</DefineConstants>
     <DefineConstants>$(DefineConstants),FX_ATLEAST_45=True</DefineConstants>
     <DefineConstants>$(DefineConstants),FX_ATLEAST_40=True</DefineConstants>
@@ -37,7 +37,8 @@
     <DefineConstants>$(DefineConstants),QUERIES_IN_FSLIB=True</DefineConstants>
     <DefineConstants>$(DefineConstants),PUT_TYPE_PROVIDERS_IN_FSCORE=True</DefineConstants>
     <DefineConstants>$(DefineConstants),FX_ATLEAST_LINQ=True</DefineConstants>
-    <TargetFrameworkProfile></TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
@@ -169,12 +170,8 @@
     <Compile Include="PropertyPages\DebugPropPage.vb">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="PropertyPages\PropertyListener.vb">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="PropertyPages\skumatrix.vb">
-      <SubType>UserControl</SubType>
-    </Compile>
+    <Compile Include="PropertyPages\PropertyListener.vb" />
+    <Compile Include="PropertyPages\skumatrix.vb" />
     <Compile Include="PropertyPages\FSharpApplicationPropPage.vb">
       <SubType>UserControl</SubType>
     </Compile>
@@ -185,7 +182,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DesignFramework\BaseDialog.vb">
-      <SubType>Code</SubType>
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="PropertyPages\ValidationException.vb">
       <SubType>Code</SubType>
@@ -193,21 +190,15 @@
     <Compile Include="PropertyPages\PropertyControlData.vb">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="PropertyPages\ControlDataFlags.vb">
-      <SubType>UserControl</SubType>
-    </Compile>
+    <Compile Include="PropertyPages\ControlDataFlags.vb" />
     <Compile Include="PropertyPages\PropPageHostDialog.vb">
-      <SubType>UserControl</SubType>
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="PropertyPages\PropPageUserControlBase.vb">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="PropertyPages\VSProductSKU.vb">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="PropertyPages\ValidationResult.vb">
-      <SubType>UserControl</SubType>
-    </Compile>
+    <Compile Include="PropertyPages\VSProductSKU.vb" />
+    <Compile Include="PropertyPages\ValidationResult.vb" />
     <Compile Include="PropertyPages\ChildPageSite.vb">
       <SubType>Code</SubType>
     </Compile>
@@ -296,9 +287,7 @@
   <ItemGroup>
     <Service Include="{94E38DFF-614B-4cbd-B67C-F211BB35CE8B}" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="My Project\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
     <SuiteBinPath>$(SuiteBinPath)\FSharp</SuiteBinPath>

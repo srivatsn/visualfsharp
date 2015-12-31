@@ -83,15 +83,15 @@ type FSharpDocumentAnalyzer() =
     override this.AnalyzeSemanticsAsync(_,_,_) =
         Task.FromResult(null) :> _
         
-[<ExportCodeFixProvider(languages=[|"F#"|])>]
+[<ExportCodeFixProvider("F#")>]
 type FSharpGenerateTypeFixer() = 
     inherit CodeFixProvider()
 
-    override this.GetFixableDiagnosticIds() =  ImmutableArray.Create("FS39")
+    override this.FixableDiagnosticIds =  ImmutableArray.Create("FS39")
 
     override this.GetFixAllProvider() = null
 
-    override this.ComputeFixesAsync(context) =
+    override this.RegisterCodeFixesAsync(context) =
         async {
             let document = context.Document
             let! text = document.GetTextAsync(context.CancellationToken) |> Async.AwaitTask
@@ -104,8 +104,8 @@ type FSharpGenerateTypeFixer() =
             let textChange = TextChange(TextSpan(lastLine.End, 0), generatedCode)
             let newDocument = document.WithText(text.WithChanges(textChange))
 
-            let codeAction = CodeAction.Create("Generate type", newDocument, "")
-            context.RegisterFix(codeAction, context.Diagnostics)
+            let codeAction = CodeAction.Create("Generate type", fun ct -> Task.Run(fun _ -> newDocument))
+            context.RegisterCodeFix(codeAction, context.Diagnostics)
         } |> Async.StartAsTask :> _
 
 

@@ -100,7 +100,7 @@ and [<Guid(FSharpConstants.packageGuidString)>]
 
     override this.Initialize() = 
         base.Initialize()
-        this.Workspace.Options <- this.Workspace.Options.WithChangedOption(SolutionCrawlerOptions.SolutionCrawler, true)
+
     override this.CreateWorkspace() = this.ComponentModel.GetService<VisualStudioWorkspaceImpl>()
     
     override this.CreateLanguageService() = 

@@ -180,5 +180,3 @@ type FSharpEditorClassificationService() =
 
         override this.AddSemanticClassificationsAsync(_,_,_,_) = Tasks.Task.FromResult(null) :> _
         override this.AdjustStaleClassification(_, classifiedSpan : ClassifiedSpan) = classifiedSpan
-
-
