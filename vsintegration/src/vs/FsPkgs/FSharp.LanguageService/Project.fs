@@ -51,6 +51,7 @@ module internal ProjectSiteOptions =
             override this.ErrorListTaskReporter() = None
             override this.AdviseProjectSiteChanges(_,_) = ()
             override this.AdviseProjectSiteCleaned(_,_) = ()
+            override this.AdviseProjectSiteClosed(_,_) = ()
             override this.IsTypeResolutionValid = not(checkOptions.IsIncompleteTypeCheckEnvironment)
             override this.TargetFrameworkMoniker = ""
             override this.LoadTime = checkOptions.LoadTime
@@ -80,6 +81,7 @@ module OrphanFileProjectSite =
             override this.ErrorListTaskReporter() = None
             override this.AdviseProjectSiteChanges(_,_) = ()
             override this.AdviseProjectSiteCleaned(_,_) = ()
+            override this.AdviseProjectSiteClosed(_,_) = ()
             override this.IsTypeResolutionValid = not enableStandaloneFileIntellisense
             override this.TargetFrameworkMoniker = ""
             override this.LoadTime = new System.DateTime(2000,1,1)  // any constant time is fine, orphan files do not interact with reloading based on update time
@@ -187,3 +189,6 @@ type FSharpProject(hierarchy: IVsHierarchy, serviceProvider: System.IServiceProv
 
     member this.AddReference(filePath : string) = 
         this.AddMetadataReferenceAndTryConvertingToProjectReferenceIfPossible(filePath, new MetadataReferenceProperties(), VSConstants.S_FALSE)
+
+    member this.Close() =
+        this.ProjectTracker.RemoveProject(this)

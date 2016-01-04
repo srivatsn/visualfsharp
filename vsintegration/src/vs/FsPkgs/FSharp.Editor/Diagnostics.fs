@@ -18,7 +18,6 @@ open Microsoft.CodeAnalysis.CodeFixes
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-
 [<ExportLanguageService(typeof<IDocumentDifferenceService>, "F#")>]
 type FSharpDocumentDifferenceService() =
     interface IDocumentDifferenceService with

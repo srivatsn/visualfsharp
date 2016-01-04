@@ -31,3 +31,4 @@ type FSharpProject =
     inherit AbstractProject
     new : hierarychy:IVsHierarchy * serviceProvider:IServiceProvider * visualStudioWorkspaceImpl:VisualStudioWorkspaceImpl * projectName:string -> FSharpProject
     member AddReference : filePath:string -> int
+    member Close : unit -> unit

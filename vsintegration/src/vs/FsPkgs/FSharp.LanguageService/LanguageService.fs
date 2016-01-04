@@ -59,7 +59,8 @@ type FSharpLanguageService(package : FSharpPackage) =
                 
                 let project = new FSharpProject(hier, this.SystemServiceProvider, workspace, site.DescriptionOfProject())
                 workspace.ProjectTracker.AddProject(project)
-
+                site.AdviseProjectSiteClosed(KnownAdviseProjectSiteChangesCallbackOwners.LanguageService, 
+                                             new AdviseProjectSiteChanges(fun () -> project.Close()))
                 for file in site.SourceFilesOnDisk() do
                     let itemid = 
                         match hier.ParseCanonicalName(file) with
