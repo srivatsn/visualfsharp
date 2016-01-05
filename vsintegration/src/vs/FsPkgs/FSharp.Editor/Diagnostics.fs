@@ -97,15 +97,19 @@ type FSharpGenerateTypeFixer() =
             let document = context.Document
             let! text = document.GetTextAsync(context.CancellationToken) |> Async.AwaitTask
 
-            let typeName = text.GetSubText(context.Span).ToString()
-            
-            let generatedCode = "\r\n\r\ntype " + typeName + "() = class end"
+            let functionName = text.GetSubText(context.Span).ToString()
 
-            let lastLine = text.Lines.Last()
-            let textChange = TextChange(TextSpan(lastLine.End, 0), generatedCode)
+            let currentLine = text.Lines.GetLineFromPosition(context.Span.Start)
+            let currentLineText = text.GetSubText(currentLine.Span).ToString()
+            let indentationLevel = currentLineText |> Seq.findIndex(fun c -> c <> ' ')
+
+            let generatedCode = Enumerable.Repeat(" ", indentationLevel).Aggregate(fun x y -> x + y) + "let " + functionName + "() = ()\r\n"
+
+            let newSpan = TextSpan(currentLine.Span.Start, 0)
+            let textChange = TextChange(newSpan, generatedCode)
             let newDocument = document.WithText(text.WithChanges(textChange))
 
-            let codeAction = CodeAction.Create("Generate type", fun ct -> Task.Run(fun _ -> newDocument))
+            let codeAction = CodeAction.Create("Generate function", fun ct -> Task.Run(fun _ -> newDocument))
             context.RegisterCodeFix(codeAction, context.Diagnostics)
         } |> Async.StartAsTask :> _
 
