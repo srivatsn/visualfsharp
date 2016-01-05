@@ -25,10 +25,13 @@ type internal Artifacts =
     member FindOwningProject : rdt:IVsRunningDocumentTable * filename:string * enableStandaloneFileIntellisense:bool -> IProjectSite
     member GetSourceOfFilename : rdt:IVsRunningDocumentTable * filename:string -> IdealSource option // REVIEW: Should be TryGetSourceOfFilename
     member GetDefinesForFile : rdt:IVsRunningDocumentTable * filename:string * enableStandaloneFileIntellisense:bool-> string list
-    
+
 [<Class>]
 type FSharpProject = 
     inherit AbstractProject
     new : hierarychy:IVsHierarchy * serviceProvider:IServiceProvider * visualStudioWorkspaceImpl:VisualStudioWorkspaceImpl * projectName:string -> FSharpProject
-    member AddReference : filePath:string -> int
-    member Close : unit -> unit
+    member internal CheckOptions : CheckOptions
+    member internal AddReference : filePath:string -> int
+    member internal RemoveReference : filePath:string -> unit
+    member internal Initialize : hier: IVsHierarchy * site:IProjectSite -> unit
+    member internal OnProjectSettingsChanged : hier: IVsHierarchy * site:IProjectSite -> unit

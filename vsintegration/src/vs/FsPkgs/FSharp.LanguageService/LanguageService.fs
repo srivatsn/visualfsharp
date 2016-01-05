@@ -48,6 +48,7 @@ type FSharpLanguageService(package : FSharpPackage) =
         let workspace = this.Package.ComponentModel.GetService<VisualStudioWorkspaceImpl>();
         let sp = new ServiceProvider(this.SystemServiceProvider.GetService)
 
+        // Ensure that we have a project in the workspace for this document.
         let (_, buffer) = view.GetBuffer()
         let filename = VsTextLines.GetFilename buffer
         let result = VsRunningDocumentTable.FindDocumentWithoutLocking(sp.Rdt,filename)
@@ -56,35 +57,13 @@ type FSharpLanguageService(package : FSharpPackage) =
             match hier with
             | :? IProvideProjectSite as siteProvider ->
                 let site = siteProvider.GetProjectSite()
-                
-                let project = new FSharpProject(hier, this.SystemServiceProvider, workspace, site.DescriptionOfProject())
-                workspace.ProjectTracker.AddProject(project)
-                site.AdviseProjectSiteClosed(KnownAdviseProjectSiteChangesCallbackOwners.LanguageService, 
-                                             new AdviseProjectSiteChanges(fun () -> project.Close()))
-                for file in site.SourceFilesOnDisk() do
-                    let itemid = 
-                        match hier.ParseCanonicalName(file) with
-                        | (VSConstants.S_OK, id) -> id
-                        | _ -> uint32 VSConstants.VSITEMID.Nil
 
-                    let document = workspace.ProjectTracker.DocumentProvider.TryGetDocumentForFile(project, itemid, file, SourceCodeKind.Regular, fun x -> true)
-                    project.AddDocument(document, true)
-                    
-                for flag in site.CompilerFlags() do
-                    let (|Reference|_|) (f : string) = if f.StartsWith("/reference") then Some (f.Replace("/reference:", "")) else None
-
-                    match flag with 
-                    | Reference ref -> 
-                        project.AddReference(ref) |> ignore
-                    | _ -> ()
-                    
-            | _ -> 
-                // This can happen when the file is in a solution folder or in, say, a C# project.
-                ()
-        | _ ->
-            // This can happen when renaming a file from a different language service into .fs or fsx.
-            // This naturally won't have an associated project.
-            ()
+                let projectId = workspace.ProjectTracker.GetOrCreateProjectIdForPath(site.ProjectFileName(), site.ProjectFileName())
+                if obj.ReferenceEquals(workspace.ProjectTracker.GetProject(projectId), null) then
+                    let fsharpProject = new FSharpProject(hier, this.SystemServiceProvider, workspace, site.ProjectFileName());
+                    fsharpProject.Initialize(hier, site)                    
+            | _ -> ()
+        | _ -> ()
 
 and [<Guid("4EB7CCB7-4336-4FFD-B12B-396E9FD079A9")>]
     FSharpEditorFactory(package : FSharpPackage) =

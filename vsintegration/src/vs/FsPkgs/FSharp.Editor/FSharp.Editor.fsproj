@@ -21,6 +21,7 @@
     <OtherFlags>$(OtherFlags) --warnon:1182  --subsystemversion:6.00</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="HostProjectService.fs" />
     <Compile Include="TokenContext.fs" />
     <Compile Include="SmartIndent.fs" />
     <Compile Include="BraceCompletion.fs" />
@@ -73,6 +74,12 @@
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.EditorFeatures.Text">
       <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.CodeAnalysis.EditorFeatures.Text.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.LanguageServices">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.VisualStudio.LanguageServices.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.LanguageServices.Implementation">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.VisualStudio.LanguageServices.Implementation.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />

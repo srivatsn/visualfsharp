@@ -38,8 +38,10 @@ type FSharpDocumentAnalyzer() =
             let! text = document.GetTextAsync(cancellationToken) |> Async.AwaitTask
 
             if not(String.IsNullOrEmpty(document.FilePath)) then 
-                let timestamp = System.DateTime(2000,1,1)
-                let checkOptions = interactiveChecker.GetCheckOptionsFromScriptRoot(document.FilePath, text.ToString(), timestamp) // REVIEW: Could pass in version for caching. SHOULD ALLOW CACHING when not Full Parse
+                let hostProjectService = document.Project.Solution.Workspace.Services.GetService<IHostProjectService>()
+                let hostProject = hostProjectService.GetHostProject(document.Project.Id)
+                let checkOptions = hostProject.CheckOptions
+
                 let untypedParse = interactiveChecker.UntypedParse(document.FilePath, text.ToString(), checkOptions)
                 
                 try
