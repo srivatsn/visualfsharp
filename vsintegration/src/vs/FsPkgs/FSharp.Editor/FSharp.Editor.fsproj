@@ -22,6 +22,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="HostProjectService.fs" />
+    <Compile Include="Scanner.fs" />
+    <Compile Include="DocumentData.fs" />
     <Compile Include="TokenContext.fs" />
     <Compile Include="SmartIndent.fs" />
     <Compile Include="BraceCompletion.fs" />
@@ -31,6 +33,7 @@
     <Compile Include="Classifier.fs" />
     <Compile Include="ContentType.fs" />
     <Compile Include="Diagnostics.fs" />
+    <Compile Include="QuickInfo.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
@@ -95,6 +98,7 @@
     <Reference Include="Microsoft.VisualStudio.Shell.Interop" />
     <Reference Include="Microsoft.VisualStudio.Shell.Immutable.10.0" />
     <Reference Include="Microsoft.VisualStudio.TextManager.Interop" />
+    <Reference Include="EnvDTE.dll" />
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
 </Project>

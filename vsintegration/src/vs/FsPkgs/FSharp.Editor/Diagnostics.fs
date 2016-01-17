@@ -33,36 +33,14 @@ type FSharpDocumentAnalyzer() =
 
     override this.AnalyzeSyntaxAsync(document, addDiagnostic, cancellationToken) =
         async {
-            let interactiveChecker = InteractiveChecker.Create(NotifyFileTypeCheckStateIsDirty(fun _ -> ()))
-            
             let! text = document.GetTextAsync(cancellationToken) |> Async.AwaitTask
 
             if not(String.IsNullOrEmpty(document.FilePath)) then 
-                let hostProjectService = document.Project.Solution.Workspace.Services.GetService<IHostProjectService>()
-                let hostProject = hostProjectService.GetHostProject(document.Project.Id)
-                let checkOptions = hostProject.CheckOptions
+                let typedResultsOption = DocumentData.GetTypedResults(document)
 
-                let untypedParse = interactiveChecker.UntypedParse(document.FilePath, text.ToString(), checkOptions)
-                
-                try
-                    interactiveChecker.StartBackgroundCompile(checkOptions)
-                    interactiveChecker.WaitForBackgroundCompile()
-                with
-                    | _ -> ()
-    
-                let! version = document.GetTextVersionAsync(cancellationToken) |> Async.AwaitTask
-                
-                let neverObsolete() = false
-                let typedResults,aborted = 
-                    match interactiveChecker.TypeCheckSource(untypedParse, document.FilePath, version.GetHashCode(), text.ToString(), checkOptions, IsResultObsolete(neverObsolete), text.Container.GetTextBuffer()) with 
-                    | NoAntecedant -> None,true
-                    | Aborted -> 
-                        // isResultObsolete returned true during the type check.
-                        None,true
-                    | TypeCheckSucceeded results -> Some results, false
-    
-                if not aborted then
-                    for error in typedResults.Value.Errors do 
+                match typedResultsOption with
+                | Some typedResults ->
+                    for error in typedResults.Errors do 
                         let severity = 
                             match error.Severity with
                             | Severity.Warning -> DiagnosticSeverity.Warning
@@ -78,6 +56,7 @@ type FSharpDocumentAnalyzer() =
     
                         let diagnostic = Diagnostic.Create(descriptor, location)
                         addDiagnostic.Invoke(diagnostic)
+                | None -> ()
             
         } |> Async.StartAsTask :> _
 

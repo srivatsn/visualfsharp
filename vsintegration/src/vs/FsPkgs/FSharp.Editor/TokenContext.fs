@@ -16,13 +16,6 @@ open System.Threading.Tasks
 open System.Linq
 open System.ComponentModel.Composition
 
-[<ExportLanguageService(typeof<FSharpHelpContextService>, "F#")>]
-type FSharpHelpContextService() =
-    interface ILineSeparatorService with
-        member this.GetLineSeparatorsAsync(_,_,_) = 
-            let spans = [new TextSpan(10, 5)]
-            Task.FromResult(spans.AsEnumerable())
-            
 /// helper class which provides token information
 type internal TokenContext (serviceProvider : SVsServiceProvider, adapterService : IVsEditorAdaptersFactoryService) =
     let fsLangService = serviceProvider.GetService(typeof<FSharpLanguageService1>) :?> FSharpLanguageService1

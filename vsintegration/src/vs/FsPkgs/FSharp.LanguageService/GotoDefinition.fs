@@ -23,6 +23,13 @@ open Microsoft.FSharp.Compiler.Lib
 open Internal.Utilities.Debug
 
 module internal OperatorToken =
+
+    let asIdentifierFromInfo (token : TokenInformation) =
+        // Typechecker reports information about all values in the same fashion no matter whether it is named value (let binding) or operator
+        // here we piggyback on this fact and just pretend that we need data time for identifier
+        let tagOfIdentToken = Microsoft.FSharp.Compiler.Parser.tagOfToken(Microsoft.FSharp.Compiler.Parser.IDENT "")
+        let endCol = token.RightColumn + 1 // EndIndex from GetTokenInfoAt points to the last operator char, but here it should point to column 'after' the last char 
+        tagOfIdentToken, token.LeftColumn, endCol
     
     let asIdentifier (token : TokenInfo) =
         // Typechecker reports information about all values in the same fashion no matter whether it is named value (let binding) or operator
