@@ -33,8 +33,9 @@ type FSharpQuickInfoProvider [<ImportingConstructor>] (textBufferFactoryService 
             async {
                 
                 let text, span = this.GetDataTipText(document, position)
-                
-                let parts = [new SymbolDisplayPart(SymbolDisplayPartKind.ClassName, null, text)]
+                let parts = match text with 
+                            | "" -> []
+                            | text -> [new SymbolDisplayPart(SymbolDisplayPartKind.Text, null, text)]
                 let content = new ClassifiableDeferredContent(new List<SymbolDisplayPart>(parts), textBufferFactoryService, contentTypeRegistryService, typeMap)
                 let item = new QuickInfoItem(span, content)
                 return item
@@ -54,104 +55,107 @@ type FSharpQuickInfoProvider [<ImportingConstructor>] (textBufferFactoryService 
                 let line, col = linePosition.Line, linePosition.Character
                 let currentLine = text.Lines.Item(line)
                 let lineText = currentLine.Text.ToString(currentLine.Span)
+                let diagnosticTipSpan = text.Lines.GetTextSpan(LinePositionSpan(LinePosition(line, col), LinePosition(line, col + 1)))
 
-                let token = scanner.GetTokenInformationAt(document, line, col).Value
-
+                let tokenOption = scanner.GetTokenInformationAt(document, line, col)
+                
+                match tokenOption with 
+                | None -> ("", diagnosticTipSpan)
+                | Some token ->
 #if DEBUG
-                use t = Trace.Call("LanguageService",
-                                   "GetDataTipText",
-                                   fun _->sprintf " line=%d col=%d tokeninfo=%A" line col token)
+                    use t = Trace.Call("LanguageService",
+                                       "GetDataTipText",
+                                       fun _->sprintf " line=%d col=%d tokeninfo=%A" line col token)
 #endif
 
-                try
-                    // If we're not on the first column; we don't find any identifier, we also look at the previous one
-                    // This allows us to do Ctrl+K, I in this case:  let f$ x = x  
-                    // Note: this is triggered by hovering over the next thing after 'f' as well - even in 
-                    //   case like "f(x)" when hovering over "(", but MPF doesn't show tooltip in that case
-                    // Note: MPF also doesn't show the tooltip if we're past the end of the line (Ctrl+K, I after 
-                    //  the last character on the line), so tooltip isn't shown in that case (suggestion 4371)
+                    try
+                        // If we're not on the first column; we don't find any identifier, we also look at the previous one
+                        // This allows us to do Ctrl+K, I in this case:  let f$ x = x  
+                        // Note: this is triggered by hovering over the next thing after 'f' as well - even in 
+                        //   case like "f(x)" when hovering over "(", but MPF doesn't show tooltip in that case
+                        // Note: MPF also doesn't show the tooltip if we're past the end of the line (Ctrl+K, I after 
+                        //  the last character on the line), so tooltip isn't shown in that case (suggestion 4371)
                     
-                    // Try the actual column first...
-                    let tokenTag, col, possibleIdentifier, makeSecondAttempt =
-                      if token.ColorClass = TokenColorKind.Operator && not alwaysTreatTokenAsIdentifier then                      
-                          let tag, startCol, endCol = OperatorToken.asIdentifierFromInfo token                      
-                          let op = lineText.Substring(startCol, endCol - startCol)
-                          tag, startCol, Some(op, endCol, false), true
-                      else
-                          match (QuickParse.GetCompleteIdentifierIsland false lineText col) with
-                          | None when col > 0 -> 
-                              // Try the previous column & get the token info for it
-                              let tokenTag = 
-                                  let token = scanner.GetTokenInformationAt(document,line,col - 1).Value
-                                  token.Tag
-                              let possibleIdentifier = QuickParse.GetCompleteIdentifierIsland false lineText (col - 1)
-                              tokenTag, col - 1, possibleIdentifier, false
-                          | _ as poss -> token.Tag, col, poss, false
+                        // Try the actual column first...
+                        let tokenTag, col, possibleIdentifier, makeSecondAttempt =
+                          if token.ColorClass = TokenColorKind.Operator && not alwaysTreatTokenAsIdentifier then                      
+                              let tag, startCol, endCol = OperatorToken.asIdentifierFromInfo token                      
+                              let op = lineText.Substring(startCol, endCol - startCol)
+                              tag, startCol, Some(op, endCol, false), true
+                          else
+                              match (QuickParse.GetCompleteIdentifierIsland false lineText col) with
+                              | None when col > 0 -> 
+                                  // Try the previous column & get the token info for it
+                                  let tokenTag = 
+                                      let token = scanner.GetTokenInformationAt(document,line,col - 1).Value
+                                      token.Tag
+                                  let possibleIdentifier = QuickParse.GetCompleteIdentifierIsland false lineText (col - 1)
+                                  tokenTag, col - 1, possibleIdentifier, false
+                              | _ as poss -> token.Tag, col, poss, false
 
 #if DEBUG
-                    let isDiagnostic = Keyboard.IsKeyPressed Keyboard.Keys.Shift
+                        let isDiagnostic = Keyboard.IsKeyPressed Keyboard.Keys.Shift
 #else
-                    let isDiagnostic = false
+                        let isDiagnostic = false
 #endif 
-                    let diagnosticTipSpan = text.Lines.GetTextSpan(LinePositionSpan(LinePosition(line, col), LinePosition(line, col + 1)))
-                    match possibleIdentifier with 
-                    | None -> (if isDiagnostic then "No identifier found at this position." else ""),diagnosticTipSpan
-                    | Some (s,colAtEndOfNames, isQuotedIdentifier) -> 
-                        let typedResultsOption = DocumentData.GetTypedResults(document)
-                        match typedResultsOption with 
-                        | Some typedResults ->
-                            // REVIEW: Need to capture and display XML
-                            let diagnosticText lead = 
-                                let errorText = String.Concat(typedResults.Errors |> Seq.truncate 5 |> Seq.map(fun pi->sprintf "%s\n" pi.Message)|>Seq.toArray)
-                                let errorText = match errorText.Length with 0->"" | _->"Errors:\n"+errorText
-                                let dataTipText = sprintf "%s\nIsland(col=%d,token=%d):\n%A\n%s%s" lead col tokenTag possibleIdentifier (document.Project.Name) errorText
-                                dataTipText
+                        match possibleIdentifier with 
+                        | None -> (if isDiagnostic then "No identifier found at this position." else ""),diagnosticTipSpan
+                        | Some (s,colAtEndOfNames, isQuotedIdentifier) -> 
+                            let typedResultsOption = DocumentData.GetTypedResults(document)
+                            match typedResultsOption with 
+                            | Some typedResults ->
+                                // REVIEW: Need to capture and display XML
+                                let diagnosticText lead = 
+                                    let errorText = String.Concat(typedResults.Errors |> Seq.truncate 5 |> Seq.map(fun pi->sprintf "%s\n" pi.Message)|>Seq.toArray)
+                                    let errorText = match errorText.Length with 0->"" | _->"Errors:\n"+errorText
+                                    let dataTipText = sprintf "%s\nIsland(col=%d,token=%d):\n%A\n%s%s" lead col tokenTag possibleIdentifier (document.Project.Name) errorText
+                                    dataTipText
 
-                            if typedResults.HasFullTypeCheckInfo then 
-                                let qualId  = PrettyNaming.GetLongNameFromString s
+                                if typedResults.HasFullTypeCheckInfo then 
+                                    let qualId  = PrettyNaming.GetLongNameFromString s
 #if DEBUG                            
-                                Trace.PrintLine("LanguageService", (fun () -> sprintf "Got qualId = %A" qualId))
+                                    Trace.PrintLine("LanguageService", (fun () -> sprintf "Got qualId = %A" qualId))
 #endif
-                                let parserState = None
+                                    let parserState = None
                                                 
-                                // Corrrect the identifier (e.g. to correctly handle active pattern names that end with "BAR" token)
-                                let tokenTag = QuickParse.CorrectIdentifierToken s tokenTag
-                                let dataTip = typedResults.GetDataTipText((line, colAtEndOfNames), lineText, qualId, tokenTag)
+                                    // Corrrect the identifier (e.g. to correctly handle active pattern names that end with "BAR" token)
+                                    let tokenTag = QuickParse.CorrectIdentifierToken s tokenTag
+                                    let dataTip = typedResults.GetDataTipText((line, colAtEndOfNames), lineText, qualId, tokenTag)
 #if DEBUG
-                                Trace.PrintLine("LanguageService", fun () -> sprintf "Got datatip=%A" dataTip)
+                                    Trace.PrintLine("LanguageService", fun () -> sprintf "Got datatip=%A" dataTip)
 #endif
-                                match dataTip with
-                                | DataTipText [] when makeSecondAttempt -> getDataTip true
-                                | _ -> 
-                                if isDiagnostic then 
-                                    let text = sprintf "plid:%A\ndataTip:\n%A" qualId dataTip
-                                    let text = 
-                                        match parserState with
-                                        | None -> text
-                                        | Some lines ->
-                                            sprintf "%s\n%s\n" text (String.concat "\n" lines)
-                                    diagnosticText text, diagnosticTipSpan
+                                    match dataTip with
+                                    | DataTipText [] when makeSecondAttempt -> getDataTip true
+                                    | _ -> 
+                                    if isDiagnostic then 
+                                        let text = sprintf "plid:%A\ndataTip:\n%A" qualId dataTip
+                                        let text = 
+                                            match parserState with
+                                            | None -> text
+                                            | Some lines ->
+                                                sprintf "%s\n%s\n" text (String.concat "\n" lines)
+                                        diagnosticText text, diagnosticTipSpan
+                                    else
+                                        let dataTipText =  XmlDocumentation.BuildDataTipText(documentationProvider, dataTip)
+
+                                        // The data tip is located w.r.t. the start of the last identifier
+                                        let sizeFixup = if isQuotedIdentifier then 4 else 0
+                                        let lastStringLength = (qualId |> List.rev |> List.head).Length  + sizeFixup
+#if DEBUG
+                                        Trace.PrintLine("LanguageService", (fun () -> sprintf "Got dataTip = %A, colOfEndOfText = %d, lastStringLength = %d, line = %d" dataTipText colAtEndOfNames lastStringLength line))
+#endif
+
+                                        // This is the span of text over which the data tip is active. If the mouse moves away from it then the
+                                        // data tip goes away
+                                        let dataTipSpan = text.Lines.GetTextSpan(LinePositionSpan(LinePosition(line, max 0 (colAtEndOfNames-lastStringLength)), LinePosition(line, colAtEndOfNames)))
+                                        (dataTipText, dataTipSpan)                                
                                 else
-                                    let dataTipText =  XmlDocumentation.BuildDataTipText(documentationProvider, dataTip)
+                                    "Bug: TypeCheckInfo option was None", diagnosticTipSpan
 
-                                    // The data tip is located w.r.t. the start of the last identifier
-                                    let sizeFixup = if isQuotedIdentifier then 4 else 0
-                                    let lastStringLength = (qualId |> List.rev |> List.head).Length  + sizeFixup
-#if DEBUG
-                                    Trace.PrintLine("LanguageService", (fun () -> sprintf "Got dataTip = %A, colOfEndOfText = %d, lastStringLength = %d, line = %d" dataTipText colAtEndOfNames lastStringLength line))
-#endif
-
-                                    // This is the span of text over which the data tip is active. If the mouse moves away from it then the
-                                    // data tip goes away
-                                    let dataTipSpan = text.Lines.GetTextSpan(LinePositionSpan(LinePosition(line, max 0 (colAtEndOfNames-lastStringLength)), LinePosition(line, colAtEndOfNames)))
-                                    (dataTipText, dataTipSpan)                                
-                            else
-                                "Bug: TypeCheckInfo option was None", diagnosticTipSpan
-
-                        | None -> (if isDiagnostic then "No typed results available." else ""),diagnosticTipSpan
-                with e-> 
-                    Assert.Exception(e)
-                    reraise()
+                            | None -> (if isDiagnostic then "No typed results available." else ""),diagnosticTipSpan
+                    with e-> 
+                        Assert.Exception(e)
+                        reraise()
 
             getDataTip false
 
