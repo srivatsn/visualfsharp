@@ -32,16 +32,16 @@ type FSharpQuickInfoProvider [<ImportingConstructor>] (textBufferFactoryService 
         member this.GetItemAsync(document, position, _) =
             async {
                 
-                let text, span = this.GetDataTipText(document, position)
-                let parts = match text with 
-                            | "" -> []
-                            | text -> [new SymbolDisplayPart(SymbolDisplayPartKind.Text, null, text)]
+                let parts, span = this.GetDataTipTextParts(document, position)
                 let content = new ClassifiableDeferredContent(new List<SymbolDisplayPart>(parts), textBufferFactoryService, contentTypeRegistryService, typeMap)
                 let item = new QuickInfoItem(span, content)
                 return item
             } |> Async.StartAsTask
 
-    member this.GetDataTipText(document : Document, position : int) =
+    member this.CreateTextOnlySymbolDisplayPart(text: string) =
+        [SymbolDisplayPart(SymbolDisplayPartKind.Text, null, text)]
+
+    member this.GetDataTipTextParts(document : Document, position : int) =
             // in cases like 'A<int>' when cursor in on '<' there is an ambiguity that cannot be resolved based only on lexer information
             // '<' can be treated both as operator and as part of identifier
             // in this case we'll do 2 passes:
@@ -60,7 +60,7 @@ type FSharpQuickInfoProvider [<ImportingConstructor>] (textBufferFactoryService 
                 let tokenOption = scanner.GetTokenInformationAt(document, line, col)
                 
                 match tokenOption with 
-                | None -> ("", diagnosticTipSpan)
+                | None -> ([], diagnosticTipSpan)
                 | Some token ->
 #if DEBUG
                     use t = Trace.Call("LanguageService",
@@ -99,7 +99,7 @@ type FSharpQuickInfoProvider [<ImportingConstructor>] (textBufferFactoryService 
                         let isDiagnostic = false
 #endif 
                         match possibleIdentifier with 
-                        | None -> (if isDiagnostic then "No identifier found at this position." else ""),diagnosticTipSpan
+                        | None -> (if isDiagnostic then this.CreateTextOnlySymbolDisplayPart("No identifier found at this position.") else []),diagnosticTipSpan
                         | Some (s,colAtEndOfNames, isQuotedIdentifier) -> 
                             let typedResultsOption = DocumentData.GetTypedResults(document)
                             match typedResultsOption with 
@@ -134,9 +134,9 @@ type FSharpQuickInfoProvider [<ImportingConstructor>] (textBufferFactoryService 
                                             | None -> text
                                             | Some lines ->
                                                 sprintf "%s\n%s\n" text (String.concat "\n" lines)
-                                        diagnosticText text, diagnosticTipSpan
+                                        this.CreateTextOnlySymbolDisplayPart(diagnosticText text), diagnosticTipSpan
                                     else
-                                        let dataTipText =  XmlDocumentation.BuildDataTipText(documentationProvider, dataTip)
+                                        let dataTipText =  XmlDocumentation.BuildDataTipSymbolDisplayParts(documentationProvider, dataTip)
 
                                         // The data tip is located w.r.t. the start of the last identifier
                                         let sizeFixup = if isQuotedIdentifier then 4 else 0
@@ -150,9 +150,9 @@ type FSharpQuickInfoProvider [<ImportingConstructor>] (textBufferFactoryService 
                                         let dataTipSpan = text.Lines.GetTextSpan(LinePositionSpan(LinePosition(line, max 0 (colAtEndOfNames-lastStringLength)), LinePosition(line, colAtEndOfNames)))
                                         (dataTipText, dataTipSpan)                                
                                 else
-                                    "Bug: TypeCheckInfo option was None", diagnosticTipSpan
+                                   this.CreateTextOnlySymbolDisplayPart("Bug: TypeCheckInfo option was None"), diagnosticTipSpan
 
-                            | None -> (if isDiagnostic then "No typed results available." else ""),diagnosticTipSpan
+                            | None -> (if isDiagnostic then this.CreateTextOnlySymbolDisplayPart("No typed results available.") else []),diagnosticTipSpan
                     with e-> 
                         Assert.Exception(e)
                         reraise()
