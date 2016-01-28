@@ -331,7 +331,8 @@ module internal XmlDocumentation =
         let segments = dataTipText |> List.map Format |> List.filter (fun (d, _)->d<>null) |> Array.ofList
 
         let text = segments |> Seq.fold(fun acc (text, _) -> acc + "\n-------------\n" + text) ""
-        let parts = segments |> Seq.fold(fun acc (_, parts) -> acc @ CreateTextOnlySymbolDisplayPart("\n-------------\n") @ parts) [] |> List.tail
+        let parts = segments |> Seq.fold(fun acc (_, parts) -> acc @ CreateTextOnlySymbolDisplayPart("\n-------------\n") @ parts) []
+        let parts = if parts.IsEmpty then [] else parts |> List.tail
 
         let lines = text.Split([|'\n'|],maxLinesInText+1) // Need one more than max to determine whether there is truncation.
         let truncate = lines.Length>maxLinesInText            
