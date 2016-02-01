@@ -45,15 +45,15 @@ namespace Microsoft.VisualStudio.FSharp.LanguageService
 
 
   [<Class>]
-  type internal FSharpLanguageService1 =
+  type internal FSharpLanguageService =
       inherit LanguageService
       interface IVsRunningDocTableEvents
       interface IVsProvideColorableItems     
       member LanguageServiceState : LanguageServiceState
 
   [<Class>]
-  type internal FSharpPackage1 =
+  type internal FSharpPackage =
       inherit Package
       interface IOleComponent
-      new : unit -> FSharpPackage1
+      new : unit -> FSharpPackage
 

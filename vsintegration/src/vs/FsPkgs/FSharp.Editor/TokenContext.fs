@@ -8,17 +8,9 @@ open Microsoft.VisualStudio.FSharp.LanguageService
 open Microsoft.VisualStudio.Shell
 open Microsoft.VisualStudio.Text.Editor
 
-open Microsoft.CodeAnalysis.Host.Mef
-open Microsoft.CodeAnalysis.Editor
-open Microsoft.CodeAnalysis.Text
-
-open System.Threading.Tasks
-open System.Linq
-open System.ComponentModel.Composition
-
 /// helper class which provides token information
 type internal TokenContext (serviceProvider : SVsServiceProvider, adapterService : IVsEditorAdaptersFactoryService) =
-    let fsLangService = serviceProvider.GetService(typeof<FSharpLanguageService1>) :?> FSharpLanguageService1
+    let fsLangService = serviceProvider.GetService(typeof<FSharpLanguageService>) :?> FSharpLanguageService
     
     /// Returns token info for given position.
     /// If trialString is provided, will return token info for given position, assuming trialString has been inserted at that position

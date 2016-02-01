@@ -92,11 +92,6 @@ module Implementation =
         [<Literal>]
         let languageServiceGuidString       = Microsoft.VisualStudio.FSharp.Shared.FSharpCommonConstants.languageServiceGuidString
 
-        [<Literal>]
-        let FSharpLanguageName = "F#"
-        [<Literal>]
-        let FSharpContentType = "F#"
-
         // These are the IDs from the Python sample:
         let intellisenseProviderGuidString  = "8b1807ea-d222-4765-afa8-c092d480e451"
         
@@ -1516,7 +1511,7 @@ type FSharpNavigation(svc:LanguageService, stateFunc:unit -> LanguageServiceStat
         
         
 and [<Guid(FSharpConstants.languageServiceGuidString)>]
-    FSharpLanguageService1() = 
+    FSharpLanguageService() = 
     inherit LanguageService() 
     
     // In case the config file is incorrect, we silently recover and disable the feature
@@ -1548,7 +1543,7 @@ and [<Guid(FSharpConstants.languageServiceGuidString)>]
     
     let mutable lastUntypedParseRequest : BackgroundRequest = null
 
-    let thisAssembly = typeof<FSharpLanguageService1>.Assembly 
+    let thisAssembly = typeof<FSharpLanguageService>.Assembly 
     let resources = lazy (new System.Resources.ResourceManager("VSPackage", thisAssembly))
     let GetString(name:string) = 
         resources.Force().GetString(name, CultureInfo.CurrentUICulture)
@@ -1586,11 +1581,11 @@ and [<Guid(FSharpConstants.languageServiceGuidString)>]
         if not ls.IsInitialized then 
 #if DEBUG            
             Flags.init()
-            use t = Trace.Call("LanguageService", "FSharpLanguageService1::Initialize", fun _->"FLS being initialized for first time and registering for RDT events")
+            use t = Trace.Call("LanguageService", "FSharpLanguageService::Initialize", fun _->"FLS being initialized for first time and registering for RDT events")
 #endif
             let sp = ServiceProvider(fls.GetService)
             let rdt = sp.Rdt
-            let preferences = new FSharpLanguagePreferences(fls.Site, (typeof<FSharpLanguageService1>).GUID, fls.Name)
+            let preferences = new FSharpLanguagePreferences(fls.Site, (typeof<FSharpLanguageService>).GUID, fls.Name)
             preferences.Init() // Reads preferences from the VS registry.
             preferences.MaxErrorMessages <- 1000
             let fileChangeEx = fls.GetService(typeof<SVsFileChangeEx >) :?> IVsFileChangeEx
@@ -1698,7 +1693,7 @@ and [<Guid(FSharpConstants.languageServiceGuidString)>]
         
     override fls.ExecuteBackgroundRequest(req:BackgroundRequest) = 
 #if DEBUG
-        use t = Trace.CallByThreadNamed("FSharpLanguageService1",
+        use t = Trace.CallByThreadNamed("FSharpLanguageService",
                                         "ExecuteBackgroundRequest", 
                                         "MPF Worker", 
                                         fun _->sprintf " location=(%d:%d), reason=%A, filename=%s" req.Line req.Col req.Reason req.FileName)
@@ -1761,7 +1756,7 @@ and [<Guid(FSharpConstants.languageServiceGuidString)>]
 
     member fls.UpdateHiddenRegions(scope:UntypedFSharpScope,source:ISource) =
 #if DEBUG
-        use t = Trace.CallByThreadNamed("FSharpLanguageService1",
+        use t = Trace.CallByThreadNamed("FSharpLanguageService",
                                         "UpdateHiddenRegions", 
                                         "UI", 
                                         fun _-> "")
@@ -1944,7 +1939,7 @@ module FSharpIntellisenseProvider =
 type internal SVsSettingsPersistenceManager = class end
 
 [<Guid("871D2A70-12A2-4e42-9440-425DD92A4116")>]
-type FSharpPackage1() as self =
+type FSharpPackage() as self =
     inherit Package()
     
     // In case the config file is incorrect, we silently recover and leave the feature enabled
@@ -1979,7 +1974,7 @@ type FSharpPackage1() as self =
     override self.Initialize() =
         UIThread.CaptureSynchronizationContext()
         self.EstablishDefaultSettingsIfMissing()
-        (self :> IServiceContainer).AddService(typeof<FSharpLanguageService1>, callback, true)
+        (self :> IServiceContainer).AddService(typeof<FSharpLanguageService>, callback, true)
         base.Initialize()
 
     /// In case custom VS profile settings for F# are not applied, explicitly set them here.
@@ -2019,8 +2014,8 @@ type FSharpPackage1() as self =
 
     member self.CreateService(_container:IServiceContainer, serviceType:Type) =
         match serviceType with 
-        | x when x = typeof<FSharpLanguageService1> -> 
-            let language = new FSharpLanguageService1()
+        | x when x = typeof<FSharpLanguageService> -> 
+            let language = new FSharpLanguageService()
             language.SetSite(self)
             language.Initialize()
             self.RegisterForIdleTime()
@@ -2047,8 +2042,8 @@ type FSharpPackage1() as self =
         override x.FDoIdle(grfidlef:uint32) =
             // see e.g "C:\Program Files\Microsoft Visual Studio 2008 SDK\VisualStudioIntegration\Common\IDL\olecm.idl" for details
             //Trace.Print("CurrentDirectoryDebug", (fun () -> sprintf "curdir='%s'\n" (System.IO.Directory.GetCurrentDirectory())))  // can be useful for watching how GetCurrentDirectory changes
-            match x.GetService(typeof<FSharpLanguageService1>) with 
-            | :? FSharpLanguageService1 as pl -> 
+            match x.GetService(typeof<FSharpLanguageService>) with 
+            | :? FSharpLanguageService as pl -> 
                 let periodic = (grfidlef &&& (uint32 _OLEIDLEF.oleidlefPeriodic)) <> 0u
                 let mutable r = pl.OnIdle(periodic, mgr)
                 if r = 0 && periodic && mgr.FContinueIdle() <> 0 then

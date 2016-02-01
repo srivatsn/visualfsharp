@@ -75,8 +75,8 @@
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\FSharp.VS.FSI\FSharp.VS.FSI.fsproj">
-      <Name>FSharp.VS.FSI</Name>
+    <ProjectReference Include="..\..\FSharp.VS.FSI\FSHarp.VS.FSI.fsproj">
+      <Name>FSHarp.VS.FSI</Name>
       <Project>{991dcf75-c2eb-42b6-9a0d-aa1d2409d519}</Project>
       <Private>True</Private>
     </ProjectReference>

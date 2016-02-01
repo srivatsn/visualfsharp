@@ -10,9 +10,9 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{EE85AAB7-CDA0-4C4E-BDA0-A64CCC413E3F}</ProjectGuid>
+    <ProjectGuid>{aff036ab-a3a3-4f53-8e65-30c987cb85bd}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AssemblyName>FSharp.LanguageService</AssemblyName>
+    <AssemblyName>FSharp.VisualStudio.LanguageServices</AssemblyName>
     <UseVsVersion>true</UseVsVersion>
     <NoWarn>$(NoWarn);75</NoWarn>
     <TargetType>LIBRARY</TargetType>
@@ -22,35 +22,18 @@
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.settings.targets" />
   <ItemGroup>
-    <EmbeddedResource Include="VSPackage.resx" />
-    <EmbeddedResource Include="FSLangSvcStrings.resx" />
     <Compile Include="InternalsVisibleTo.fs" />
-    <Compile Include="$(FSharpSourcesRoot)\fsharp\InternalCollections.fsi">
-      <Link>InternalCollections.fsi</Link>
-    </Compile>
-    <Compile Include="$(FSharpSourcesRoot)\fsharp\InternalCollections.fs">
-      <Link>InternalCollections.fs</Link>
-    </Compile>
     <Compile Include="..\Common.fs">
       <Link>Common.fs</Link>
     </Compile>
-    <Compile Include="IdealManagedLanguageService.fs" />
-    <Compile Include="Keyboard.fs" />
     <Compile Include="Error.fs" />
     <Compile Include="Com.fs" />
-    <Compile Include="Quickparse.fs" />
     <Compile Include="Vs.fs" />
     <Compile Include="Project.fsi" />
     <Compile Include="Project.fs" />
-    <Compile Include="Colorize.fsi" />
-    <Compile Include="Colorize.fs" />
-    <Compile Include="GotoDefinition.fs" />
-    <Compile Include="Source.fsi" />
-    <Compile Include="Source.fs" />
     <Compile Include="XmlDocumentation.fsi" />
     <Compile Include="XmlDocumentation.fs" />
-    <Compile Include="Servicem.fsi" />
-    <Compile Include="Servicem.fs" />
+    <Compile Include="LanguageService.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
@@ -98,19 +81,37 @@
     <Reference Include="Microsoft.VisualStudio.ExtensibilityHosting, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.ComponentModelHost, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\..\..\..\packages\Roslyn\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.CodeAnalysis.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Features">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.CodeAnalysis.Features.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.LanguageServices">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.VisualStudio.LanguageServices.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.LanguageServices.Implementation">
+      <HintPath>..\..\..\..\..\packages\Roslyn\Microsoft.VisualStudio.LanguageServices.Implementation.dll</HintPath>
+    </Reference>
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\FSharp.LanguageService\FSharp.LanguageService.Base\FSharp.LanguageService.Base.csproj">
+      <Name>FSharp.LanguageService.Base</Name>
+      <Project>{1c5c163c-37ea-4a3c-8ccc-0d34b74bf8ef}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\FSharp.Project\Contract\ProjectSystem.Contract.fsproj">
       <Name>ProjectSystem.Contract</Name>
       <Project>{98dd453f-6f3f-48dc-9c2b-c13a4eca423b}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="FSharp.LanguageService.Base\FSharp.LanguageService.Base.csproj">
-      <Name>FSharp.LanguageService.Base</Name>
-      <Project>{1c5c163c-37ea-4a3c-8ccc-0d34b74bf8ef}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\FSharp.VS.FSI\FSharp.VS.FSI.fsproj">

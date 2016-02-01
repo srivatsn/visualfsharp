@@ -52,15 +52,15 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' or '$(Configuration)' == 'VSDebug' ">
     <StartAction>Program</StartAction>
     <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
-    <StartArguments>/rootsuffix FSharp /log</StartArguments>
-    <VSSDKTargetPlatformRegRootSuffix>FSharp</VSSDKTargetPlatformRegRootSuffix>
+    <StartArguments>/rootsuffix RoslynDev /log</StartArguments>
+    <VSSDKTargetPlatformRegRootSuffix>RoslynDev</VSSDKTargetPlatformRegRootSuffix>
     <CreateVsixContainer>true</CreateVsixContainer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' or '$(Configuration)' == 'VSRelease' ">
     <StartAction>Program</StartAction>
     <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
-    <StartArguments>/rootsuffix FSharp /log</StartArguments>
-    <VSSDKTargetPlatformRegRootSuffix>FSharp</VSSDKTargetPlatformRegRootSuffix>
+    <StartArguments>/rootsuffix RoslynDev /log</StartArguments>
+    <VSSDKTargetPlatformRegRootSuffix>RoslynDev</VSSDKTargetPlatformRegRootSuffix>
     <CreateVsixContainer>true</CreateVsixContainer>
   </PropertyGroup>
   <ItemGroup>
@@ -149,6 +149,10 @@
       <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="..\..\vs\FsPkgs\FSharp.EditorFeatures\FSharp.EditorFeatures.fsproj">
+      <Project>{470e7c9d-fb19-47bc-9b02-5c2e056f73d9}</Project>
+      <Name>FSharp.EditorFeatures</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\vs\FsPkgs\FSharp.Editor\FSharp.Editor.fsproj">
       <Project>{65e0e82a-eace-4787-8994-888674c2fe87}</Project>
       <Name>FSharp.Editor</Name>
@@ -174,6 +178,10 @@
       <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="..\..\vs\FsPkgs\FSharp.Project\Contract\ProjectSystem.Contract.fsproj">
+      <Project>{98dd453f-6f3f-48dc-9c2b-c13a4eca423b}</Project>
+      <Name>ProjectSystem.Contract</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\vs\FsPkgs\FSharp.Project\FS\ProjectSystem.fsproj">
       <Project>{6196B0F8-CAEA-4CF1-AF82-1B520F77FE44}</Project>
       <Name>ProjectSystem</Name>
@@ -187,6 +195,10 @@
       <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
       <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\vs\FsPkgs\FSharp.VisualStudio.LanguageServices\FSharp.VisualStudio.LanguageServices.fsproj">
+      <Project>{aff036ab-a3a3-4f53-8e65-30c987cb85bd}</Project>
+      <Name>FSharp.VisualStudio.LanguageServices</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\vs\FsPkgs\FSharp.VS.FSI\FSHarp.VS.FSI.fsproj">
       <Project>{991DCF75-C2EB-42B6-9A0D-AA1D2409D519}</Project>

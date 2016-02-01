@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 namespace Microsoft.VisualStudio.FSharp.LanguageService
-open Microsoft.VisualStudio.FSharp.LanguageService
 open System
 open System.Text
 open System.Collections.Generic
@@ -11,6 +10,15 @@ open EnvDTE
 open EnvDTE80
 open Microsoft.VisualStudio.Shell.Interop
 open Microsoft.FSharp.Compiler.SourceCodeServices
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.Text
+
+/// XmlDocumentation provider
+type internal IdealDocumentationProvider =
+    /// Append the given raw XML formatted into the string builder
+    abstract AppendDocumentationFromProcessedXML : StringBuilder * string * bool * bool * string option-> unit
+    /// Appends text for the given filename and signature into the StringBuilder
+    abstract AppendDocumentation : StringBuilder * string * string * bool * bool * string option-> unit
 
 /// Documentation helpers.
 module internal XmlDocumentation =
@@ -217,29 +225,91 @@ module internal XmlDocumentation =
           .ToString()
           .Trim([|'\n'|])
 
+    let CreateTextOnlySymbolDisplayPart(text: string) =
+        [SymbolDisplayPart(SymbolDisplayPartKind.Text, null, text)]
+
+    let ScanAndCreateSymbolDisplayParts(_ : string) =
+        []
+//        let scanner =  new FSharpScanner(fun source ->
+//                let sourceTokenizer = SourceTokenizer([],"")
+//                sourceTokenizer.CreateLineTokenizer(source))
+//        let lexState = ref 0L
+//
+//        let sourceText = SourceText.From(text)
+//
+//        let scanOneLineAndCreateParts(line : TextLine, lexState) = 
+//            let lineText = line.Text.ToString(line.Span)
+//            scanner.SetLineText(lineText)
+//
+//            let getSymbolDisplayKind colorClass =
+//                match colorClass with 
+//                | TokenColorKind.Comment -> SymbolDisplayPartKind.Text
+//                | TokenColorKind.Identifier -> SymbolDisplayPartKind.Text
+//                | TokenColorKind.Keyword -> SymbolDisplayPartKind.Keyword
+//                | TokenColorKind.String -> SymbolDisplayPartKind.StringLiteral
+//                | TokenColorKind.Text -> SymbolDisplayPartKind.Text
+//                | TokenColorKind.UpperIdentifier -> SymbolDisplayPartKind.Text
+//                | TokenColorKind.Number -> SymbolDisplayPartKind.NumericLiteral
+//                | TokenColorKind.InactiveCode -> SymbolDisplayPartKind.Text
+//                | TokenColorKind.PreprocessorKeyword -> SymbolDisplayPartKind.Keyword
+//                | TokenColorKind.Operator -> SymbolDisplayPartKind.Operator
+//#if COLORIZE_TYPES
+//                | TokenColorKind.TypeName -> SymbolDisplayPartKind.ClassName
+//#endif
+//                | TokenColorKind.Default | _ -> SymbolDisplayPartKind.Text
+//
+//            let rec scanAndCreateParts(parts, lexState) = 
+//                let tokenInfoOpt = scanner.ScanTokenWithDetails(lexState)
+//                match tokenInfoOpt with
+//                | None -> parts
+//                | Some tokenInfo -> 
+//                    let partKind = getSymbolDisplayKind tokenInfo.ColorClass
+//                    let span = LinePositionSpan(LinePosition(line.LineNumber, tokenInfo.LeftColumn), LinePosition(line.LineNumber, tokenInfo.RightColumn + 1))
+//                    let tokenText = line.Text.ToString(line.Text.Lines.GetTextSpan(span))
+//                    let part = new SymbolDisplayPart(partKind, null, tokenText)
+//                    let newParts = part :: parts
+//                    scanAndCreateParts(newParts, lexState)
+//
+//            let newLinePart = new SymbolDisplayPart(SymbolDisplayPartKind.Punctuation, null, "\n")
+//            let parts = newLinePart :: scanAndCreateParts([], lexState)
+//            List.rev(parts)
+//
+//        sourceText.Lines |> Seq.fold(fun acc line -> acc @ scanOneLineAndCreateParts(line, lexState)) []
+
     /// Build a data tip text string with xml comments injected.
     let BuildTipText(documentationProvider:IdealDocumentationProvider, dataTipText:DataTipElement list, showText, showExceptions, showParameters, showOverloadText) = 
         let maxLinesInText = 45
         let Format(dataTipElement:DataTipElement) =
-            let segment = 
+            let segment, symbolDisplayParts = 
                 match dataTipElement with 
-                | DataTipElementNone->StringBuilder()
+                | DataTipElementNone->"", []
                 | DataTipElement(text,xml) -> 
                     let segment = StringBuilder()
                     if showText then 
                         segment.Append(text) |> ignore
 
-                    AppendXmlComment(documentationProvider, segment, xml, showExceptions, showParameters, None)
-                    segment
+                    let xmlSegment = StringBuilder()
+                    AppendXmlComment(documentationProvider, xmlSegment, xml, showExceptions, showParameters, None)
+                    let cleanSegment = CleanDataTipSegment(segment)
+                    let cleanXmlSegment = CleanDataTipSegment(xmlSegment)
+                    let segmentText = if not(String.IsNullOrEmpty(cleanXmlSegment)) then cleanSegment + "\n" + cleanXmlSegment else cleanSegment
+                    let segmentParts  = if not(String.IsNullOrEmpty(cleanXmlSegment)) then ScanAndCreateSymbolDisplayParts(cleanSegment) @ CreateTextOnlySymbolDisplayPart("\n") @ CreateTextOnlySymbolDisplayPart(cleanXmlSegment) else ScanAndCreateSymbolDisplayParts(cleanSegment)
+                    segmentText, segmentParts
                 | DataTipElementParameter(text, xml, paramName) ->
                     let segment = StringBuilder()
                     if showText then 
                         segment.Append(text) |> ignore
-
-                    AppendXmlComment(documentationProvider, segment, xml, showExceptions, showParameters, Some paramName)
-                    segment
+                        
+                    let xmlSegment = StringBuilder()
+                    AppendXmlComment(documentationProvider, xmlSegment, xml, showExceptions, showParameters, Some paramName)
+                    let cleanSegment = CleanDataTipSegment(segment)
+                    let cleanXmlSegment = CleanDataTipSegment(xmlSegment)
+                    let segmentText = if not(String.IsNullOrEmpty(cleanXmlSegment)) then cleanSegment + "\n" + cleanXmlSegment else cleanSegment
+                    let segmentParts  = if not(String.IsNullOrEmpty(cleanXmlSegment)) then ScanAndCreateSymbolDisplayParts(cleanSegment) @ CreateTextOnlySymbolDisplayPart("\n") @ CreateTextOnlySymbolDisplayPart(cleanXmlSegment) else ScanAndCreateSymbolDisplayParts(cleanSegment)
+                    segmentText, segmentParts
                 | DataTipElementGroup(overloads) -> 
                     let segment = StringBuilder()
+                    let xmlSegment = StringBuilder()
                     let overloads = Array.ofList overloads
                     let len = Array.length overloads
                     if len >= 1 then 
@@ -256,13 +326,20 @@ module internal XmlDocumentation =
                             if len >= 6 then segment.Append("\n").Append(PrettyNaming.FormatAndOtherOverloadsString(len-5)) |> ignore
 
                         let _,xml = overloads.[0]
-                        AppendXmlComment(documentationProvider, segment, xml, showExceptions, showParameters, None)
-                    segment
-                | DataTipElementCompositionError(errText) -> StringBuilder(errText)
-            CleanDataTipSegment(segment) 
+                        AppendXmlComment(documentationProvider, xmlSegment, xml, showExceptions, showParameters, None)
+                    let cleanSegment = CleanDataTipSegment(segment)
+                    let cleanXmlSegment = CleanDataTipSegment(xmlSegment)
+                    let segmentText = if not(String.IsNullOrEmpty(cleanXmlSegment)) then cleanSegment + "\n" + cleanXmlSegment else cleanSegment
+                    let segmentParts  = if not(String.IsNullOrEmpty(cleanXmlSegment)) then ScanAndCreateSymbolDisplayParts(cleanSegment) @ CreateTextOnlySymbolDisplayPart("\n") @ CreateTextOnlySymbolDisplayPart(cleanXmlSegment) else ScanAndCreateSymbolDisplayParts(cleanSegment)
+                    segmentText, segmentParts
+                | DataTipElementCompositionError(errText) -> (errText, CreateTextOnlySymbolDisplayPart(errText))
+            segment, symbolDisplayParts
 
-        let segments = dataTipText |> List.map Format |> List.filter (fun d->d<>null) |> Array.ofList
-        let text =  System.String.Join("\n-------------\n", segments)
+        let segments = dataTipText |> List.map Format |> List.filter (fun (d, _)->d<>null) |> Array.ofList
+
+        let text = segments |> Seq.fold(fun acc (text, _) -> acc + "\n-------------\n" + text) ""
+        let parts = segments |> Seq.fold(fun acc (_, parts) -> acc @ CreateTextOnlySymbolDisplayPart("\n-------------\n") @ parts) []
+        let parts = if parts.IsEmpty then [] else parts |> List.tail
 
         let lines = text.Split([|'\n'|],maxLinesInText+1) // Need one more than max to determine whether there is truncation.
         let truncate = lines.Length>maxLinesInText            
@@ -271,10 +348,16 @@ module internal XmlDocumentation =
         let lines = lines |> Seq.toArray
         let join = String.Join("\n",lines)
 
-        join
+        join, parts
+
+    let BuildDataTipSymbolDisplayParts(documentationProvider:IdealDocumentationProvider, DataTipText(dataTipText)) =
+        let _ , parts = BuildTipText(documentationProvider,dataTipText,true, true, false, true) 
+        parts
 
     let BuildDataTipText(documentationProvider:IdealDocumentationProvider, DataTipText(dataTipText)) = 
-        BuildTipText(documentationProvider,dataTipText,true, true, false, true) 
+        let text , _ = BuildTipText(documentationProvider,dataTipText,true, true, false, true) 
+        text
 
     let BuildMethodOverloadTipText(documentationProvider:IdealDocumentationProvider, DataTipText(dataTipText)) = 
-        BuildTipText(documentationProvider,dataTipText,false, false, true, false) 
+        let text , _ = BuildTipText(documentationProvider,dataTipText,false, false, true, false) 
+        text
